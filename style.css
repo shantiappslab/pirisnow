@@ -139,6 +139,19 @@ td.neu{font-weight:700;color:var(--obaga)}
 .vitrina .avantatges{padding-right:20px;margin-bottom:16px}.vitrina .avantatges li{color:var(--gel)}
 .vitrina .avantatges li:before{background:#7FB3E8}
 .gratis{font-size:13px;color:#A9BED3;margin:8px 0 0}
+.iphone{margin:26px 20px 0 0;padding:18px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+.iphone h3{display:flex;align-items:center;gap:8px;color:#fff;margin:0 0 8px}
+.iphone p{margin:0 0 12px}
+.passos{counter-reset:pas;list-style:none;padding:0;margin:0 0 4px}
+.passos li{counter-increment:pas;position:relative;padding:4px 0 12px 44px;min-height:32px}
+.passos li:before{content:counter(pas);position:absolute;left:0;top:0;width:32px;height:32px;border-radius:50%;background:#1E6FD9;color:#fff;font:700 15px/32px Sora,sans-serif;text-align:center}
+.icona-ios{width:20px;height:20px;vertical-align:-4px;color:#7FB3E8}
+.boto-iphone{display:none;align-items:center;gap:10px;background:#fff;color:var(--nit);text-decoration:none;border-radius:14px;padding:10px 18px;min-height:56px;font:700 16px Sora,sans-serif}
+.barra-ios{display:none}
+.ios .boto-play,.ios .barra-play{display:none}
+.ios .boto-iphone{display:inline-flex}
+.ios .barra-ios{display:flex}
+.instalada .barra,.instalada .iphone,.instalada .boto-iphone{display:none}
 .faq details{border-bottom:1px solid var(--gel);padding:4px 0}
 .faq details:last-child{border-bottom:0}
 .faq summary{cursor:pointer;font-weight:600;color:var(--nit);padding:10px 0;list-style-position:outside}
