@@ -59,6 +59,7 @@ section{background:#fff;border-radius:18px;padding:20px;margin:16px 0}
 .prevista{color:var(--obaga)}
 .punt-obert,.punt-tancat{display:inline-block;width:10px;height:10px;border-radius:50%;background:#1F8A55}
 .punt-tancat{background:#8C96A8}
+.llegenda-mapa .punt-tancat{background:#fff;box-shadow:inset 0 0 0 2.5px #3D4A5C}
 .estat-gran{font:700 20px Sora,sans-serif;display:flex;align-items:center;gap:8px;margin:0 0 12px}
 .xifres-grans{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px}
 .xifra{background:var(--neu);border-radius:12px;padding:12px}
@@ -139,7 +140,7 @@ td.neu{font-weight:700;color:var(--obaga)}
 .vitrina .avantatges{padding-right:20px;margin-bottom:16px}.vitrina .avantatges li{color:var(--gel)}
 .vitrina .avantatges li:before{background:#7FB3E8}
 .gratis{font-size:13px;color:#A9BED3;margin:8px 0 0}
-.iphone{margin:26px 20px 0 0;padding:18px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+.iphone{display:none;margin:26px 20px 0 0;padding:18px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
 .iphone h3{display:flex;align-items:center;gap:8px;color:#fff;margin:0 0 8px}
 .iphone p{margin:0 0 12px}
 .passos{counter-reset:pas;list-style:none;padding:0;margin:0 0 4px}
@@ -151,7 +152,43 @@ td.neu{font-weight:700;color:var(--obaga)}
 .ios .boto-play,.ios .barra-play{display:none}
 .ios .boto-iphone{display:inline-flex}
 .ios .barra-ios{display:flex}
-.instalada .barra,.instalada .iphone,.instalada .boto-iphone{display:none}
+/* Les instruccions d'iPhone: a l'iPhone, o des de l'enllaç «Tens iPhone?» (#iphone) a la resta */
+.ios .iphone,.iphone:target{display:block}
+.enllac-iphone{display:inline-block;margin-top:12px;font-size:14px;font-weight:600;color:inherit;opacity:.85}
+.vitrina .enllac-iphone{color:#A9BED3}
+.foto .enllac-iphone{display:block;width:fit-content;margin:14px 0 10px;color:#fff}
+/* A l'iPhone, res de Google Play: ni el «gratis · Android» ni els blocs de l'app (la barra de baix porta a les instruccions) */
+.ios .enllac-iphone,.ios .gratis-android,.ios .cta{display:none}
+.instalada .barra,.instalada .iphone,.instalada .boto-iphone,.instalada .enllac-iphone{display:none}
+/* Mapes (web_mapa.js): el de pistes de la fitxa i el de totes les estacions */
+.mapa{position:relative;aspect-ratio:4/3;margin:14px 0;border-radius:16px;overflow:hidden;background:#dfe6ec}
+@media (min-width:700px){.mapa{aspect-ratio:16/10}}
+.mapa-gran{aspect-ratio:auto;height:72vh;min-height:420px}
+.mapa:fullscreen{border-radius:0;margin:0}
+.mapa .mapa-lloc{position:absolute;inset:0}
+.mapa-carrega,.mapa-avis-error{position:absolute;inset:auto 0 45% 0;text-align:center;color:var(--suau);font-weight:600;margin:0}
+.mapa-avis-tracat{display:none;position:absolute;left:10px;bottom:10px;margin:0;max-width:calc(100% - 64px);padding:5px 11px;border-radius:14px;background:rgba(255,255,255,.93);color:#1b2430;font-size:.8rem;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.2);z-index:2}.sense-tracat .mapa-avis-tracat{display:block}
+.mapa-avis-error{display:none}.mapa-error .mapa-avis-error{display:block}.mapa-error .mapa-carrega{display:none}
+.mapa-modes{position:absolute;top:10px;left:10px;z-index:2;display:flex;background:#fff;border-radius:12px;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.mapa-modes button{border:0;background:none;font:700 14px Sora,sans-serif;color:var(--nit);padding:7px 12px;border-radius:9px;cursor:pointer;min-width:44px;min-height:36px}
+.mapa-modes button[aria-pressed=true]{background:var(--nit);color:#fff}
+.mapa .maplibregl-popup-content{font:14px/1.35 Inter,sans-serif;color:var(--nit);padding:10px 12px;border-radius:12px}
+.mapa .maplibregl-popup-content strong,.mapa .maplibregl-popup-content span,.mapa .maplibregl-popup-content a{display:block}
+.mapa .maplibregl-popup-content span{color:var(--suau);font-size:13px}
+.mapa .maplibregl-popup-content a{margin-top:6px;font-weight:700}
+.xips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.xip{display:inline-flex;align-items:center;gap:7px;border:1px solid #C9D5E2;background:#fff;color:var(--nit);border-radius:10px;padding:8px 12px;min-height:40px;font:600 14px Inter,sans-serif;cursor:pointer}
+.xip i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.xip i.triangle{border-radius:0;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #1E6FD9}
+.xip[aria-pressed=true]{background:var(--nit);color:#fff;border-color:var(--nit)}
+.xip-resum{min-height:1.4em;margin:8px 0 0;font-size:14px;color:var(--suau)}
+.pistes-total{margin:0 0 4px}
+.llegenda span,.llegenda-mapa span{display:inline-flex;align-items:center;gap:6px;margin:0 14px 6px 0;font-size:14px}
+.llegenda i{width:14px;height:14px;border-radius:3px;display:inline-block}
+.llegenda-pendents{margin-top:10px}
+.llegenda-mapa{display:flex;flex-wrap:wrap;align-items:center}
+.llegenda-mapa .nota{margin:0 0 6px auto}
+.titol-pla{margin:18px 0 6px}
 .faq details{border-bottom:1px solid var(--gel);padding:4px 0}
 .faq details:last-child{border-bottom:0}
 .faq summary{cursor:pointer;font-weight:600;color:var(--nit);padding:10px 0;list-style-position:outside}
