@@ -23,6 +23,7 @@ const gruixZoom = (a, b) => ['interpolate', ['exponential', 2], ['zoom'], 11.5, 
 const gruix = (px) => gruixZoom(px / 4, px * 4);
 const ZOOM_PISTES = 10.5;
 const PITCH = 60;
+const PIRINEU = [[-1.9, 42.25], [3.3, 43.05]];
 
 const textos = (() => {
   try { return JSON.parse(document.getElementById('textos-mapa').textContent); } catch (e) { return {}; }
@@ -187,7 +188,10 @@ function pendents(map, si) {
 function afegeixPunts(map, punts) {
   map.addSource('punts', { type: 'geojson', data: { type: 'FeatureCollection', features: punts.map((p) => ({
     type: 'Feature', geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-    properties: { nom: p.nom, url: p.url, color: p.color, estat: p.estat, anell: !!p.anell } })) } });
+    properties: { nom: p.nom, url: p.url, color: p.color, estat: p.estat, anell: !!p.anell, nordica: !!p.nordica } })) } });
+  // La zona de toc: un cercle invisible més gran que el punt (al mòbil, el punt de 5 px costava d'encertar)
+  map.addLayer({ id: 'punts-toc', type: 'circle', source: 'punts', paint: {
+    'circle-radius': 16, 'circle-color': '#000000', 'circle-opacity': 0.01, 'circle-pitch-alignment': 'viewport' } });
   map.addLayer({ id: 'punts', type: 'circle', source: 'punts', paint: {
     // Les tancades, anell fosc amb el centre blanc (com a l'app): el gris es perdia sobre el relleu
     'circle-color': ['case', ['get', 'anell'], '#ffffff', ['get', 'color']],
@@ -248,7 +252,7 @@ async function obre(caixa) {
       let punts = [];
       try { punts = JSON.parse(document.getElementById('punts-mapa').textContent); } catch (e) { /* sense punts */ }
       afegeixPunts(map, punts);
-      map.fitBounds([[-1.9, 42.25], [3.3, 43.05]], { padding: 20, duration: 0 });
+      map.fitBounds(PIRINEU, { padding: 20, duration: 0 });
     } else {
       const limits = estat.dades && domini(estat.dades, lat, lon, caixa.dataset.nordica === '1');
       if (!estat.dades || !estat.dades.features.length) caixa.classList.add('sense-pistes');
@@ -263,18 +267,107 @@ async function obre(caixa) {
     pendents(map, estat.pendents);
   });
 
+  let modeEstacio = null;
   if (general) {
-    map.on('click', 'punts', (ev) => {
-      const f = ev.features[0];
-      const div = document.createElement('div');
-      const b = document.createElement('strong'); b.textContent = f.properties.nom;
-      const s = document.createElement('span'); s.textContent = f.properties.estat;
-      const a = document.createElement('a'); a.href = f.properties.url; a.textContent = (textos.fitxa || '›');
-      div.append(b, s, a);
-      new Popup({ closeButton: false, maxWidth: '240px' }).setLngLat(f.geometry.coordinates).setDOMContent(div).addTo(map);
-    });
-    map.on('mouseenter', 'punts', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'punts', () => { map.getCanvas().style.cursor = ''; });
+  // Mode estació del mapa general: en tocar-ne una, el mapa vola des del Pirineu pla fins a les pistes en 3D i hi
+  // gira a poc a poc. Sense zoom: arrossegar (dins del domini) i girar amb dos dits per mirar les pistes. El giro
+  // s'atura en tocar el mapa i torna al cap d'uns segons. «‹ Tot el Pirineu» torna a l'enquadrament pla. 2D/3D continua funcionant.
+  const reduit = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const GIR = 0.006;  // graus per mil·lisegon (una volta cada minut)
+  let estacio = null, ampli = null, gir = null, reprendre = null;
+  const atura = () => { if (gir) cancelAnimationFrame(gir); gir = null; clearTimeout(reprendre); };
+  const gira = () => {
+    atura();
+    if (reduit || !estacio || !en3d) return;
+    let t0 = null;
+    const pas = (t) => { if (t0 !== null) map.setBearing(map.getBearing() + Math.min(t - t0, 50) * GIR); t0 = t; gir = requestAnimationFrame(pas); };
+    gir = requestAnimationFrame(pas);
+  };
+  // Dins de l'estació, res de zoom: es pot girar (dos dits o el botó dret) però el zoom queda fix (fixaZoom)
+  const ZOOMS = ['scrollZoom', 'doubleClickZoom', 'boxZoom', 'keyboard', 'touchPitch'];
+  const zMin = map.getMinZoom(), zMax = map.getMaxZoom();
+  const fixaZoom = (z) => { map.setMinZoom(z ?? zMin); map.setMaxZoom(z ?? zMax); };
+  const bloqueja = (si) => {
+    ZOOMS.forEach((h) => map[h]?.[si ? 'disable' : 'enable']());
+    if (!si) fixaZoom(null);
+    // Dins de l'estació, un dit arrossega el mapa (fora, dos dits, perquè la pàgina es pugui desplaçar)
+    map.cooperativeGestures?.[si ? 'disable' : 'enable']();
+  };
+  // Que el centre no surti del domini de l'estació (eixamplat): sense zoom, no hi hauria manera de tornar-hi
+  const dins = () => {
+    if (!ampli) return null;
+    const c = map.getCenter(), [[w, s], [e, n]] = ampli;
+    const lng = Math.min(Math.max(c.lng, w), e), lat = Math.min(Math.max(c.lat, s), n);
+    return lng !== c.lng || lat !== c.lat ? [lng, lat] : null;
+  };
+  // En acabar d'arrossegar (amb la inèrcia), si s'ha sortit, torna a la vora del domini amb suavitat
+  let tornant = false;
+  map.on('moveend', () => {
+    if (tornant || gir || map.isMoving()) return;
+    const c = dins();
+    if (c) { tornant = true; map.easeTo({ center: c, duration: 600 }); map.once('moveend', () => { tornant = false; }); }
+  });
+  lloc.addEventListener('pointerdown', () => { if (estacio) atura(); });
+  lloc.addEventListener('pointerup', () => { if (estacio && en3d) { clearTimeout(reprendre); reprendre = setTimeout(gira, 5000); } });
+  const tancaPopups = () => caixa.querySelectorAll('.maplibregl-popup').forEach((p) => p.remove());
+
+  const torna = document.createElement('button');
+  torna.type = 'button'; torna.className = 'mapa-torna'; torna.hidden = true;
+  torna.textContent = textos.pirineu || '‹';
+  caixa.append(torna);
+  map.on('moveend', () => { torna.hidden = !estacio && map.getZoom() < 8; });
+  const esperaFi = (fet) => map.once('moveend', fet);
+
+  const entra = (f) => {
+    const [flon, flat] = f.geometry.coordinates;
+    const limits = (estat.dades && domini(estat.dades, flat, flon, !!f.properties.nordica))
+      || [[flon - 0.025, flat - 0.018], [flon + 0.025, flat + 0.018]];
+    atura();
+    estacio = limits;
+    const [[w, s], [e, n]] = limits, mx = Math.max((e - w) * 0.25, 0.006), my = Math.max((n - s) * 0.25, 0.005);
+    ampli = [[w - mx, s - my], [e + mx, n + my]];
+    bloqueja(true);
+    torna.hidden = false;
+    en3d = true; marca();
+    map.setTerrain({ source: 'terreny', exaggeration: 1.5 });
+    const bearing = estat.dades ? rumbPendent(estat.dades, limits) : 0;
+    const cam = map.cameraForBounds(limits, { bearing, padding: { top: 70, bottom: 40, left: 30, right: 30 } });
+    const desti = { center: cam ? cam.center : [flon, flat], zoom: Math.min((cam ? cam.zoom : 13) + 0.5, 15), pitch: PITCH, bearing };
+    fixaZoom(null);
+    if (reduit) { map.jumpTo(desti); fixaZoom(map.getZoom()); return; }
+    // Un sol vol, alt i lent: s'allunya una mica, travessa el Pirineu i baixa inclinant-se cap a les pistes
+    map.flyTo({ ...desti, duration: 4200, curve: 1.6, essential: true });
+    esperaFi(() => { if (estacio === limits) { fixaZoom(map.getZoom()); gira(); } });
+  };
+
+  const surt = () => {
+    atura();
+    estacio = null; ampli = null;
+    bloqueja(false);
+    tancaPopups();
+    const cam = map.cameraForBounds(PIRINEU, { padding: 20 });
+    const desti = { center: cam.center, zoom: cam.zoom, pitch: 0, bearing: 0 };
+    const pla = () => { if (!estacio) { map.setTerrain(null); en3d = false; marca(); torna.hidden = true; } };
+    if (reduit) { map.jumpTo(desti); pla(); return; }
+    map.flyTo({ ...desti, duration: 3000, curve: 1.5, essential: true });
+    esperaFi(pla);
+  };
+  torna.addEventListener('click', surt);
+
+  map.on('click', 'punts-toc', (ev) => {
+    const f = ev.features[0];
+    tancaPopups();
+    entra(f);
+    const div = document.createElement('div');
+    const b = document.createElement('strong'); b.textContent = f.properties.nom;
+    const s = document.createElement('span'); s.textContent = f.properties.estat;
+    const a = document.createElement('a'); a.href = f.properties.url; a.textContent = (textos.fitxa || '›');
+    div.append(b, s, a);
+    new Popup({ closeButton: true, maxWidth: '240px' }).setLngLat(f.geometry.coordinates).setDOMContent(div).addTo(map);
+  });
+  map.on('mouseenter', 'punts-toc', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'punts-toc', () => { map.getCanvas().style.cursor = ''; });
+  modeEstacio = { atura, gira, actiu: () => !!estacio };
   }
 
   // 2D / 3D
@@ -289,6 +382,11 @@ async function obre(caixa) {
     } else {
       map.setTerrain(null);
       map.easeTo({ pitch: 0, bearing: 0, duration: 700 });
+    }
+    // Dins d'una estació, en 3D torna a girar; en 2D, quieta
+    if (modeEstacio?.actiu()) {
+      modeEstacio.atura();
+      if (en3d) map.once('moveend', modeEstacio.gira);
     }
   }));
   marca();
