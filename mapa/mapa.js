@@ -204,6 +204,18 @@ function afegeixPunts(map, punts) {
     paint: { 'text-color': '#0E2238', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } });
 }
 
+// Els aparcaments a peu de pistes (P1, P2…, com a l'app): un cercle blau amb el codi
+function afegeixAparcaments(map, aparcaments) {
+  map.addSource('aparcaments', { type: 'geojson', data: { type: 'FeatureCollection', features: aparcaments.map((a) => ({
+    type: 'Feature', geometry: { type: 'Point', coordinates: [a.lon, a.lat] }, properties: { c: a.c } })) } });
+  map.addLayer({ id: 'aparcaments', type: 'circle', source: 'aparcaments', paint: {
+    'circle-radius': 11, 'circle-color': '#1652B8', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
+    'circle-pitch-alignment': 'viewport' } });
+  map.addLayer({ id: 'aparcaments-codi', type: 'symbol', source: 'aparcaments', layout: {
+    'text-field': ['get', 'c'], 'text-font': ['Noto Sans Bold'], 'text-size': 11, 'text-allow-overlap': true },
+    paint: { 'text-color': '#ffffff' } });
+}
+
 // ── Un mapa ─────────────────────────────────────────────────────────────────────────────────────────
 async function obre(caixa) {
   const { Map, Popup, AttributionControl, NavigationControl, FullscreenControl } = await carregaMapLibre();
@@ -243,6 +255,31 @@ async function obre(caixa) {
   map.on('idle', () => { if (!repintat) { repintat = true; setTimeout(() => map.triggerRepaint(), 60); } });
 
   const estat = { ressalta: null, pendents: false, dades: null };
+  let aparcaments = [];
+  try { aparcaments = JSON.parse(caixa.dataset.aparcaments || '[]'); } catch (e) { /* sense aparcaments */ }
+
+  // Fitxa: en 3D, les pistes giren a poc a poc (com a l'app); tocar el mapa ho atura i torna a girar 5 s després.
+  // Fora de la pantalla, quieta (no gasta bateria)
+  let giraFitxa = null;
+  if (!general) {
+    const reduit = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const GIR = 0.006;  // graus per mil·lisegon (una volta cada minut)
+    let gir = null, reprendre = null, visible = true, llest = false;
+    const atura = () => { if (gir) cancelAnimationFrame(gir); gir = null; clearTimeout(reprendre); };
+    const gira = () => {
+      atura();
+      if (reduit || !en3d || !visible || !llest) return;
+      let t0 = null;
+      const pas = (t) => { if (t0 !== null) map.setBearing(map.getBearing() + Math.min(t - t0, 50) * GIR); t0 = t; gir = requestAnimationFrame(pas); };
+      gir = requestAnimationFrame(pas);
+    };
+    lloc.addEventListener('pointerdown', atura);
+    lloc.addEventListener('pointerup', () => { clearTimeout(reprendre); reprendre = setTimeout(gira, 5000); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) gira(); else atura(); }).observe(caixa);
+    }
+    giraFitxa = { atura, gira, comenca: () => { llest = true; gira(); } };
+  }
   map.on('style.load', async () => {
     afegeixRelleu(map);
     if (en3d) map.setTerrain({ source: 'terreny', exaggeration: 1.5 });
@@ -254,13 +291,19 @@ async function obre(caixa) {
       afegeixPunts(map, punts);
       map.fitBounds(PIRINEU, { padding: 20, duration: 0 });
     } else {
-      const limits = estat.dades && domini(estat.dades, lat, lon, caixa.dataset.nordica === '1');
+      let limits = estat.dades && domini(estat.dades, lat, lon, caixa.dataset.nordica === '1');
+      // Els aparcaments, també dins de l'enquadrament
+      if (limits) for (const a of aparcaments) {
+        limits = [[Math.min(limits[0][0], a.lon), Math.min(limits[0][1], a.lat)], [Math.max(limits[1][0], a.lon), Math.max(limits[1][1], a.lat)]];
+      }
+      if (aparcaments.length) afegeixAparcaments(map, aparcaments);
       if (!estat.dades || !estat.dades.features.length) caixa.classList.add('sense-pistes');
       else if (!limits) caixa.classList.add('sense-tracat');
       if (limits) {
         const bearing = en3d ? rumbPendent(estat.dades, limits) : 0;
         const cam = map.cameraForBounds(limits, { bearing, padding: 30 });
         if (cam) map.jumpTo({ center: cam.center, zoom: Math.min(cam.zoom + (en3d ? 0.5 : 0), 15.2), bearing, pitch: en3d ? PITCH : 0 });
+        map.once('idle', () => giraFitxa?.comenca());
       }
     }
     ressalta(map, estat.ressalta);
@@ -387,6 +430,10 @@ async function obre(caixa) {
     if (modeEstacio?.actiu()) {
       modeEstacio.atura();
       if (en3d) map.once('moveend', modeEstacio.gira);
+    }
+    if (giraFitxa) {
+      giraFitxa.atura();
+      if (en3d) map.once('moveend', giraFitxa.gira);
     }
   }));
   marca();

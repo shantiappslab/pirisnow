@@ -91,6 +91,9 @@ td.neu{font-weight:700;color:var(--obaga)}
 .dades dt{color:var(--suau)}.dades dd{margin:0;font-weight:600}
 .cta{background:var(--obaga);color:#fff;display:flex;gap:18px;align-items:flex-start}
 .cta h2{color:#fff}.cta p{color:var(--gel)}
+.cta-avantatges{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px}
+.cta-avantatges li{color:#fff;padding-left:28px;position:relative;line-height:1.4}
+.cta-avantatges li::before{content:"✓";position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:#2EB872;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .cta-simbol .simbol{width:64px}
 .boto{display:inline-block;background:#fff;color:var(--nit);font-weight:700;text-decoration:none;border-radius:999px;padding:12px 20px;min-height:44px}
 .boto:hover{background:var(--gel);color:var(--nit)}
@@ -176,7 +179,33 @@ td.neu{font-weight:700;color:var(--obaga)}
 .foto .enllac-iphone{display:block;width:fit-content;margin:14px 0 10px;color:#fff}
 /* A l'iPhone, res de Google Play: ni el «gratis · Android» ni els blocs de l'app (la barra de baix porta a les instruccions) */
 .ios .enllac-iphone,.ios .gratis-android,.ios .cta{display:none}
+/* Aparcaments i serveis de la fitxa (com a l'app) */
+.aparcaments,.serveis{list-style:none;margin:0;padding:0}
+.aparcaments li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gel)}
+.aparcaments li:last-child,.serveis li:last-child a{border-bottom:0}
+.codi-p{flex:0 0 34px;height:34px;border-radius:9px;background:#1652B8;color:#fff;font:700 13px Sora,sans-serif;display:flex;align-items:center;justify-content:center}
+.aparc-nom{flex:1;min-width:0}.aparc-nom strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aparc-nom small,.serveis small{display:block;color:#5B6B7C;font-size:13px}
+.aparcaments .ruta{font-weight:600;text-decoration:none;white-space:nowrap;padding:8px 4px}
+.serveis a{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gel);text-decoration:none;color:var(--text);min-height:44px}
+.serveis .icona{flex:0 0 32px;font-size:22px;text-align:center}.serveis a>span:nth-child(2){flex:1;min-width:0}
+.serveis .fletxa{font-size:22px;color:#5B6B7C}
+/* Actualitat: carrusel de notícies amb foto (es llisca de costat) */
+.noticies{list-style:none;margin:0 -20px 0 0;padding:0 20px 6px 0;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.noticies::-webkit-scrollbar{display:none}
+.noticies li{flex:0 0 min(78%,300px);scroll-snap-align:start}
+.noticies a{position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:210px;border-radius:18px;overflow:hidden;background:#1E4F8F;color:#fff;text-decoration:none;padding:14px}
+.noticies img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.noticies a:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(14,34,56,.25) 50%,rgba(14,34,56,.94))}
+.noticies span{position:relative;z-index:1}
+.noticies .titular{font:700 16px/1.3 Sora,sans-serif;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.noticies .mitja{font-size:13px;opacity:.85;margin-top:6px}
 .instalada .barra,.instalada .iphone,.instalada .boto-iphone,.instalada .enllac-iphone{display:none}
+/* A l'iPhone no hi ha app: res del vídeo, les captures ni les funcions de l'app d'Android, només com tenir-hi la web;
+   i amb la web ja a la pantalla d'inici, ni això */
+.ios .vitrina>h2,.ios .vitrina .video,.ios .vitrina .mobils,.ios .vitrina .avantatges{display:none}
+.ios .vitrina .iphone{margin-top:0}
+.ios.instalada .vitrina{display:none}
 /* Mapes (web_mapa.js): el de pistes de la fitxa i el de totes les estacions */
 .mapa{position:relative;aspect-ratio:4/3;margin:14px 0;border-radius:16px;overflow:hidden;background:#dfe6ec}
 @media (min-width:700px){.mapa{aspect-ratio:16/10}}
