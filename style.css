@@ -109,6 +109,15 @@ td.neu{font-weight:700;color:var(--obaga)}
 .barra:hover{color:#fff}
 .barra{transition:transform .25s,opacity .25s}.barra.amagada{transform:translateY(150%);opacity:0;pointer-events:none}
 .enllacos-xip{display:flex;flex-wrap:wrap;gap:8px}
+.pestanyes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pestanyes>input{position:absolute;opacity:0;pointer-events:none}
+.pestanyes>label{display:inline-flex;flex-direction:column;justify-content:center;min-height:52px;padding:4px 16px;border-radius:14px;background:var(--neu);border:1px solid var(--gel);color:var(--nit);font-weight:600;font-size:15px;cursor:pointer}
+.pestanyes>label small{font-weight:400;font-size:12px;color:var(--suau)}
+.pestanyes>input:checked+label{background:var(--obaga);border-color:var(--obaga);color:#fff}
+.pestanyes>input:checked+label small{color:var(--gel)}
+.pestanyes>input:focus-visible+label{outline:2px solid var(--cresta);outline-offset:2px}
+.pestanyes>.panell{display:none;flex:1 1 100%;min-width:0}
+#dia-avui:checked~#panell-avui,#dia-dema:checked~#panell-dema,#dia-finde:checked~#panell-finde{display:block}
 .enllacos-xip a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:var(--neu);border:1px solid var(--gel);color:var(--nit);font-weight:600;font-size:15px;text-decoration:none}
 .enllacos-xip a:hover{background:var(--gel)}
 .barra span{flex:1;font-weight:600;font-size:15px}
