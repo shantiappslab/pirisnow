@@ -11,8 +11,10 @@ h3{font-size:17px;margin:20px 0 8px}
 .cap .amplada{display:flex;align-items:center;justify-content:space-between;min-height:60px}
 .marca{display:flex;align-items:center;gap:10px;text-decoration:none}
 .simbol{width:40px;height:auto;flex-shrink:0}
-.paraula{height:26px;width:auto}
-@media (max-width:420px){.paraula{height:22px}.marca .simbol{width:34px}}
+.paraula{height:26px;width:auto;display:block}
+.marca-text{display:flex;flex-direction:column;gap:3px}
+.eslogan{color:var(--gel);font-size:12px;line-height:1;letter-spacing:.02em;white-space:nowrap}
+@media (max-width:420px){.paraula{height:22px}.marca .simbol{width:34px}.eslogan{font-size:11px}}
 .cap .amplada{flex-wrap:wrap;gap:0 16px}
 .menu{display:flex;flex-wrap:wrap;gap:0 14px}
 .menu a{color:var(--gel);text-decoration:none;font-weight:600;padding:12px 0;font-size:15px}
